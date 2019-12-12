@@ -1,47 +1,26 @@
-// $(document).ready(function () {
-//     $("#template_text").keyup(function () {
-//         var text = $("#text").html();
-//         var template_text =  $("#template_text").val();
-//         $.ajax({
-//             url: "/type_races/create",
-//             type: "POST",
-//             dataType: 'json',
-//             data :{"text_area": template_text },
-//             success: function (data,status,jqXHR) {
-//                 $("#dummy_text").val(template_text);
-//             },
-//             error: function () {
-//
-//             }
-//         });
-//     });
-// });
-
-
-
-
 var countCharacters=0;
 var startTime;
 var userKeyPressCount=0;
 
 $(document).on("turbolinks:load", function () {
+    //Our custom function.
     arrayOfText();
     $("button").on("click",function () {
         $('#template_text').focus();
         $('#template_text').val("");
     });
+
     $("#template_text").keyup(function () {
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
-
         $.ajax({
-            url: "/type_races/"+text_id,
+            url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
-            dataType: 'json',
+            // dataType: 'json',
             data :{"text_area": template_text },
             success: function (data,status,jqXHR) {
-
+                console.log("data is :"+ data.text + " "+ "Status is "+ status)
                 giveColorFeedback(text,template_text);
                 updateProgressBar(text,template_text);
                 updateWPM();
@@ -50,10 +29,13 @@ $(document).on("turbolinks:load", function () {
                     handleGameOver();
                 }
             },
-            error: function () {
+            error: function (error) {
+                console.log("The error is "+error)
             }
         });
     });
+
+
     $("#template_text").on("input",function(event){
         if (startTime === undefined) {
             startTime = new Date($.now());
@@ -134,6 +116,20 @@ function isGameOver(){
 
 function handleGameOver() {
     displayAccuracy();
+    $.ajax({
+        url: "http://localhost:3000/type_races/"+text_id,
+        type: "GET",
+        success: function (response) {
+          var len = response.length;
+          for(var i= 0; i<len; i++){
+              var desc = response[i];
+              console.log("The description is "+desc);
+          }
+        },
+        error: function (data) {
+            console.log("The error is "+data)
+        }
+    });
     disableInput();
 }
 
@@ -144,13 +140,23 @@ function displayAccuracy() {
     accuracy=Math.round( accuracy );
     $('#showAccuracy').removeClass("hidden");
     $(' #accuracy').text(accuracy);
+
+    // $.ajax({
+    //     url: "http://localhost:3000/type_races/"+text_id,
+    //     type: "GET",
+    //     // dataType: 'json',
+    //     data :{"text_area": template_text },
+    //     success: function (data,status,jqXHR) {
+    //         alert(data)
+    //     },
+    //     error: function (data) {
+    //         console.log("The error is "+data)
+    //     }
+    // });
 }
 function disableInput() {
     $('#template_text').prop('disabled', true);
 }
-
-
-
 
 
 var quotes = ["Hello there", "Genius is one percent inspiration and ninety-nine percent perspiration.", "You can observe a lot just by watching.","A house divided against itself cannot stand.",
