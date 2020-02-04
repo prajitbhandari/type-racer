@@ -2,33 +2,27 @@ class TypeRacesController < ApplicationController
   # access all: [:show, :index], user: {except: [:destroy]}, company_admin: :all
 
   def index
-    @type_race = TypeRace.last
+    # @type_race = TypeRace.all.sample
   end
 
-  # def show
-  #   @templates = RaceTemplate.all.sample
-  #   @type_race = TypeRace.create(users: [current_user])
-  # end
-
   def show
-    # debugger
     #Get template_id same as race_template_id
     @type_race = TypeRace.find(params[:id])
-    @templates = RaceTemplate.all.sample
-    # @templates = RaceTemplate.find_by_id(@type_race.race_templates_id)
+    @templates = RaceTemplate.find_by_id(@type_race.race_templates_id)
     @user = User.find_by_id(current_user.id)
   end
 
   def create_or_join
-    # debugger
     pending_race = TypeRace.pending.last
-    pending_race.users << User.all
     if pending_race
+      pending_race.users << User.all
       pending_race.update(current_user_id: current_user.id, status: "ongoing")
+      debugger
       redirect_to type_race_path(pending_race)
     else
-      templates = RaceTemplate.all.sample
-      # type_race = TypeRace.create(user_1_id: current_user.id, user_2_id: nil, race_templates_id: templates)
+      @templates = RaceTemplate.all.sample
+      type_race = TypeRace.create(current_user_id: current_user.id, race_templates_id: @templates.id)
+      debugger
       redirect_to type_race_path(type_race)
     end
   end
