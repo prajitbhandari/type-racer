@@ -2,67 +2,35 @@ class TypeRacesController < ApplicationController
   # access all: [:show, :index], user: {except: [:destroy]}, company_admin: :all
 
   def index
-
+    @type_race = TypeRace.last
   end
 
-  # def new
+  # def show
   #   @templates = RaceTemplate.all.sample
-  #   @type_race = TypeRace.create(user_id: current_user)
-  # end
-  #
-  # def create
-  #   @type_racer = TypeRace.new(type_racer_params)
-  #   respond_to do |format|
-  #     if @type_racer.save
-  #       format.html { redirect_to  @type_racer, notice: 'Text was successfully created.'}
-  #
-  #       format.json { render json: { text: @type_racer.text_area}, status: :created }
-  #     else
-  #       format.html { render :new }
-  #       format.json { render json: @type_racer.errors, status: :unprocessable_entity }
-  #     end
-  #   end
+  #   @type_race = TypeRace.create(users: [current_user])
   # end
 
   def show
+    # debugger
+    #Get template_id same as race_template_id
+    @type_race = TypeRace.find(params[:id])
     @templates = RaceTemplate.all.sample
-    @type_race = TypeRace.create(users: [current_user])
-  end
-
-
-
-  def start_or_join_request
-    @type_race = TypeRace.create(user_id: current_user)
-    user_count =  TypeRace.find(User.count)
-    if time_count== false && user_count >=1
-      create_or_join
-    else
-      update
-      start_or_join_request
-    end
+    # @templates = RaceTemplate.find_by_id(@type_race.race_templates_id)
+    @user = User.find_by_id(current_user.id)
   end
 
   def create_or_join
+    # debugger
     pending_race = TypeRace.pending.last
-
-    # if pending_race && pending_race.time_remaining?
-      if pending_race
-      # if time_count == true
-      #   join_race # use if additional logic needed
-      type_race = pending_race
-      # else
-      #   create
-      # end
+    pending_race.users << User.all
+    if pending_race
+      pending_race.update(current_user_id: current_user.id, status: "ongoing")
+      redirect_to type_race_path(pending_race)
     else
-      type_race = TypeRace.create(type_racer_params )
-      # create
+      templates = RaceTemplate.all.sample
+      # type_race = TypeRace.create(user_1_id: current_user.id, user_2_id: nil, race_templates_id: templates)
+      redirect_to type_race_path(type_race)
     end
-    type_race.users << User.last
-    redirect_to type_race
-  end
-
-  def poll
-
   end
 
   def update
@@ -75,7 +43,6 @@ class TypeRacesController < ApplicationController
   end
 
   private
-
   def  type_racer_params
     params.permit(:text_area, :wpm, :id, :status)
   end
@@ -90,7 +57,5 @@ class TypeRacesController < ApplicationController
       end
     end
   end
-
-
 end
 

@@ -71,8 +71,9 @@ function updateWPM(){
     $('#checkWpm').text(wpm);
 }
 function updateProgressBar(text,template_text){
+    var current_user_id = $(".current_user")[0].id;
     var percentage = 3 + getProgress();
-    var progressBarSelector = $("#newBar");
+    var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
     // var text = $('#text').text();
     // var template_text = $('#template_text').val();
@@ -80,7 +81,6 @@ function updateProgressBar(text,template_text){
     for(var i = currentCharIndex; i <= text.length - 1 ; i++) {
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
             $(progressBar).css("width", percentage + "%" );
-            // $("#newBar").animate({left: "+=500"}, 2000);
         }
     }
 }
@@ -91,18 +91,12 @@ function getProgress(){
 }
 
 function giveColorFeedback(text,template_text){
-
-    let currentCharIndex = 0 ;
-
-    for(let i = currentCharIndex; i < text.length  ; i++){
+    for(let i = 0; i < text.length; i++){
         $("span #" + i).removeClass("match unmatch");
     }
-    for (let i= currentCharIndex; i<template_text.length; i++){
-        // console.log(template_text + " vs " + text);
-        // console.log(template_text[i] + " vs " + text[i]);
+    for (let i= 0; i<template_text.length; i++){
         if (template_text[i] == text[i]){
             $("span #" + i).addClass("match").removeClass("unmatch");
-            // console.log($("span #" + i));
         } else {
             $("span #"  + i).removeClass("match").addClass("unmatch");
         }
@@ -140,19 +134,6 @@ function displayAccuracy() {
     accuracy=Math.round( accuracy );
     $('#showAccuracy').removeClass("hidden");
     $(' #accuracy').text(accuracy);
-
-    // $.ajax({
-    //     url: "http://localhost:3000/type_races/"+text_id,
-    //     type: "GET",
-    //     // dataType: 'json',
-    //     data :{"text_area": template_text },
-    //     success: function (data,status,jqXHR) {
-    //         alert(data)
-    //     },
-    //     error: function (data) {
-    //         console.log("The error is "+data)
-    //     }
-    // });
 }
 function disableInput() {
     $('#template_text').prop('disabled', true);

@@ -1,10 +1,14 @@
 <br><br>
 <span id="text"><%= @templates.text %></span>
-<div id = "barProgress">
-  <div id="newBar">
-    <%=image_tag "car.jpg" ,width:50, height:42, class: "pull-right"%>
+<% User.all.each do |user|%>
+  <div id = "barProgress">
+    <div id="newBar<%= user.id %>">
+      <%=image_tag "car.jpg" ,width:50, height:42, class: "pull-right"%>
+    </div>
+    <span>User<%=user.id%></span>
   </div>
-</div>
+  <br>
+<% end %>
 
 <%= form_with(model:@type_racer,local:true) do |form| %>
   <div class="field">
@@ -13,7 +17,7 @@
     <span class ="unmatch"></span>
   </div>
   <div class="hiddenField">
-    <input type="hidden" id="text_id" value="<%= @type_race.id %>"  >
+    <input type="hidden" id="text_id" value="<%= @type_race.id %>">
   </div>
 <% end %>
 
@@ -28,26 +32,3 @@
 
 <div id="result"></div>
 
-<!--<div id = "barProgress">-->
-<!--  <div id="newBar">-->
-    <%#=image_tag "car.jpg" ,width:50, height:42, class: "pull-right"%>
-<!--  </div>-->
-
-<!--</div>-->
-
-<!--<div class="input">-->
-<!--  <h1><span id="displayedText"></span>-->
-<!--    <span class ="match"> </span>-->
-<!--    <span class ="unmatch"></span>-->
-<!--  </h1>-->
-<!--</div>-->
-<!--<div>-->
-<!--  <input type = "text" id="userInput" value="" size="100">-->
-<!--</div>-->
-<!--<button >Start</button>-->
-<!--<div>-->
-<!--  <p>WPM : <span id="checkWpm"> 0 </span></p>-->
-<!--</div>-->
-<!--<div class="hidden" id="showAccuracy">-->
-<!--  <p >Accuracy : <span id="accuracy"> 0 </span></p>-->
-<!--</div>-->
