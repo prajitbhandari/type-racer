@@ -3,6 +3,7 @@ var startTime;
 var userKeyPressCount=0;
 
 $(document).on("turbolinks:load", function () {
+
     //Our custom function.
     arrayOfText();
     $("button").on("click",function () {
@@ -60,7 +61,8 @@ function arrayOfText() {
     $("#text").html(textTemplateSpanified);
 }
 
-function updateWPM(){
+
+function updateWPM(current_user_id){
     countCharacters += 1;
     var currentTime=new Date($.now());
     var timeInSecs = (currentTime-startTime)/1000;
@@ -69,6 +71,7 @@ function updateWPM(){
     var wpm = wordsWritten/timeInMins;
     wpm = parseInt(wpm,10);
     $('#checkWpm').text(wpm);
+
 }
 function updateProgressBar(text,template_text){
     var current_user_id = $(".current_user")[0].id;
@@ -133,7 +136,7 @@ function displayAccuracy() {
     var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
     accuracy=Math.round( accuracy );
     $('#showAccuracy').removeClass("hidden");
-    $(' #accuracy').text(accuracy);
+    $('#accuracy').text(accuracy);
 }
 function disableInput() {
     $('#template_text').prop('disabled', true);

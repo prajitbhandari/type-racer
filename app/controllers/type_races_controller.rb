@@ -17,12 +17,10 @@ class TypeRacesController < ApplicationController
     if pending_race
       pending_race.users << User.all
       pending_race.update(current_user_id: current_user.id, status: "ongoing")
-      debugger
       redirect_to type_race_path(pending_race)
     else
       @templates = RaceTemplate.all.sample
       type_race = TypeRace.create(current_user_id: current_user.id, race_templates_id: @templates.id)
-      debugger
       redirect_to type_race_path(type_race)
     end
   end
