@@ -25,6 +25,7 @@ class TypeRacesController < ApplicationController
     end
   end
 
+
   def update
     @type_racer = TypeRace.find(params[:id])
     respond_to do |format|

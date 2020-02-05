@@ -25,15 +25,13 @@
 <button >Start</button>
 <% User.all.each do |user| %>
   <div>
-    <p>User<%= user.id%>WPM : <span id="checkWpm"> 0 </span></p>
+    <p>User<%= user.id%>WPM : <span id="checkWpm<%= user.id %>"> 0 </span></p>
   </div>
-  <div class="hidden" id="showAccuracy">
-    <p >User<%= user.id%>Accuracy : <span id="accuracy"> 0 </span></p>
+  <div class="showAccuracy">
+    <p >User<%= user.id%>Accuracy : <span id="accuracy<%= user.id %>"> 0 </span></p>
   </div>
   <br>
 <% end %>
-
-
 
 <div id="result"></div>
 

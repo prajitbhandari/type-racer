@@ -1,3 +1,7 @@
 <h1>You are in Game <%= @type_race.id %></h1>
+<p> All The users in this Type race are </p>
+<% User.all.each do |user| %>
+  <li class="race_users"><%= user.id%></li>
+<% end %>
 <%= render 'form', template:@template %>
 <%= link_to 'Back' , type_races_index_path %>

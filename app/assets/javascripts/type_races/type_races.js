@@ -15,22 +15,27 @@ $(document).on("turbolinks:load", function () {
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
+        var current_user_id = $(".current_user")[0].id;
+        var race_user_ids = $(".race_users").map(function() {
+            return this.innerHTML;
+        }).get();
+
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
-            // dataType: 'json',
-            data :{"text_area": template_text },
+            data :{"text_area": template_text},
             success: function (data,status,jqXHR) {
                 console.log("data is :"+ data.text + " "+ "Status is "+ status)
                 giveColorFeedback(text,template_text);
-                updateProgressBar(text,template_text);
-                updateWPM();
+                updateProgressBar(text,template_text, current_user_id);
+                updateWPM(current_user_id);
 
                 if (isGameOver() == true){
-                    handleGameOver();
+                    handleGameOver(current_user_id, text_id);
                 }
             },
             error: function (error) {
+                alert("The error is "+ error);
                 console.log("The error is "+error)
             }
         });
@@ -70,23 +75,22 @@ function updateWPM(current_user_id){
     var wordsWritten = countCharacters/5;
     var wpm = wordsWritten/timeInMins;
     wpm = parseInt(wpm,10);
-    $('#checkWpm').text(wpm);
+    $('#checkWpm'+ current_user_id).text(wpm);
 
 }
-function updateProgressBar(text,template_text){
-    var current_user_id = $(".current_user")[0].id;
+function updateProgressBar(text,template_text, current_user_id){
     var percentage = 3 + getProgress();
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
-    // var text = $('#text').text();
-    // var template_text = $('#template_text').val();
     var currentCharIndex = template_text.length - 1;
-    for(var i = currentCharIndex; i <= text.length - 1 ; i++) {
+    for(var i = 0; i <template_text.length-1; i++) {
+        console.log("template length"+template_text.length);
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
             $(progressBar).css("width", percentage + "%" );
         }
     }
 }
+
 function getProgress(){
     var template_text_length = $("#template_text").val().length;
     var quote_length = $("#text").text().length;
@@ -111,8 +115,8 @@ function isGameOver(){
     return ($('#text').text()===$('#template_text').val());
 }
 
-function handleGameOver() {
-    displayAccuracy();
+function handleGameOver(current_user_id, text_id) {
+    displayAccuracy(current_user_id);
     $.ajax({
         url: "http://localhost:3000/type_races/"+text_id,
         type: "GET",
@@ -120,28 +124,29 @@ function handleGameOver() {
           var len = response.length;
           for(var i= 0; i<len; i++){
               var desc = response[i];
-              console.log("The description is "+desc);
+              // console.log("The description is "+desc);
           }
         },
         error: function (data) {
+            // alert("Another Error is "+data);
             console.log("The error is "+data)
         }
     });
     disableInput();
 }
 
-function displayAccuracy() {
+function displayAccuracy(current_user_id) {
     var textCharLen= $('#text').text().length;
     var userKeyPressInputCharLen=userKeyPressCount;
     var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
     accuracy=Math.round( accuracy );
-    $('#showAccuracy').removeClass("hidden");
-    $('#accuracy').text(accuracy);
+    accuracy=Math.round( accuracy );
+    $('.showAccuracy').show("fast");
+    $('#accuracy'+current_user_id).text(accuracy);
 }
 function disableInput() {
     $('#template_text').prop('disabled', true);
 }
-
 
 var quotes = ["Hello there", "Genius is one percent inspiration and ninety-nine percent perspiration.", "You can observe a lot just by watching.","A house divided against itself cannot stand.",
     "Difficulties increase the nearer we get to the goal.","Fate is in your hands and no one elses",
