@@ -23,9 +23,11 @@ $(document).on("turbolinks:load", function () {
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
-            data :{"text_area": template_text},
+            dataType: "json",
+            data :{"text_area": template_text, "current_user_id": current_user_id},
             success: function (data,status,jqXHR) {
-                console.log("data is :"+ data.text + " "+ "Status is "+ status)
+                console.log("User"+current_user_id);
+                console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status)
                 giveColorFeedback(text,template_text);
                 updateProgressBar(text,template_text, current_user_id);
                 updateWPM(current_user_id);

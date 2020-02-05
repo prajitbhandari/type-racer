@@ -29,15 +29,15 @@ class TypeRacesController < ApplicationController
   def update
     @type_racer = TypeRace.find(params[:id])
     respond_to do |format|
-      if @type_racer.update_attribute(:text_area, type_racer_params[:text_area])
-        format.json { render json: { text: @type_racer.text_area}, status: :ok}
+      if @type_racer.update_attributes(:text_area => type_racer_params[:text_area], :current_user_id => type_racer_params[:current_user_id])
+        format.json { render json: { text: @type_racer}, status: :ok}
       end
     end
   end
 
   private
   def  type_racer_params
-    params.permit(:text_area, :wpm, :id, :status)
+    params.permit(:text_area, :current_user_id, :wpm, :id, :status)
   end
 
   def time_count
