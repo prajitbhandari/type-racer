@@ -24,7 +24,7 @@
 
 <button >Start</button>
 <% User.all.each do |user| %>
-  <div>
+  <div class = "showWpm">
     <p>User<%= user.id%>WPM : <span id="checkWpm<%= user.id %>"> 0 </span></p>
   </div>
   <div class="showAccuracy">

@@ -25,11 +25,17 @@ class TypeRacesController < ApplicationController
     end
   end
 
+  def poll
+    @type_race = TypeRace.find(params[:id])
+    respond_to do |format|
+      format.json { render json: { text: @type_race } }
+    end
+  end
 
   def update
     @type_racer = TypeRace.find(params[:id])
     respond_to do |format|
-      if @type_racer.update_attributes(:text_area => type_racer_params[:text_area], :current_user_id => type_racer_params[:current_user_id])
+      if @type_racer.update_attributes(text_area: type_racer_params[:text_area], current_user_id: type_racer_params[:current_user_id])
         format.json { render json: { text: @type_racer}, status: :ok}
       end
     end
