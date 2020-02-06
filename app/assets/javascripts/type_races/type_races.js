@@ -10,8 +10,7 @@ $(document).on("turbolinks:load", function () {
         $('#template_text').val("");
     });
 
-    // $("#template_text").keyup(function (e) {
-        $("#template_text").keyup(function(){
+    $("#template_text").keyup(function(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
@@ -19,7 +18,6 @@ $(document).on("turbolinks:load", function () {
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
-            cache: false,
             dataType: "json",
             data :{"text_area": template_text, "current_user_id": current_user_id},
             success: function (data, status) {
@@ -29,9 +27,9 @@ $(document).on("turbolinks:load", function () {
                 giveColorFeedback(text,template_text);
                 updateWPM(current_user_id);
 
-                // if (isGameOver() == true){
-                //     handleGameOver(current_user_id, text_id);
-                // }
+                if (isGameOver() == true){
+                    handleGameOver(current_user_id, text_id);
+                }
             },
             error: function (error) {
                 alert("The error is "+ error);
@@ -107,10 +105,10 @@ function updateProgressBar(text,template_text, current_user_id){
     var progressBar = $(progressBarSelector);
     var currentCharIndex = template_text.length-1;
     currentCharIndex < 0 ? currentCharIndex = 0 : currentCharIndex;
-    console.log("currentCharIndex is"+currentCharIndex );
+    // console.log("currentCharIndex is"+currentCharIndex );
     for(var i = 0; i <template_text.length; i++) {
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
-            console.log("A"+template_text[currentCharIndex]);
+            // console.log("A"+template_text[currentCharIndex]);
             $(progressBar).css("width", percentage + "%" );
         }
     }
@@ -126,7 +124,7 @@ function giveColorFeedback(text,template_text){
     for(let i = 0; i < text.length; i++){
         $("span #a" + i).removeClass("match unmatch");
     }
-   for (let i= 0; i<template_text.length; i++){
+    for (let i= 0; i<template_text.length; i++){
         if (template_text[i] === text[i]){
             $("span #a" + i).addClass("match").removeClass("unmatch");
         } else {
@@ -134,29 +132,29 @@ function giveColorFeedback(text,template_text){
         }
     }
 }
-//
-// function isGameOver(){
-//     return ($('#text').text()===$('#template_text').val());
-// }
-//
-// function handleGameOver(current_user_id, text_id) {
-//     displayAccuracy(current_user_id);
-//     $.ajax({
-//         url: "http://localhost:3000/type_races/"+text_id,
-//         type: "GET",
-//         success: function (response) {
-//           var len = response.length;
-//           for(var i= 0; i<len; i++){
-//               var desc = response[i];
-//               // console.log("The description is "+desc);
-//           }
-//         },
-//         error: function (data) {
-//             console.log("The error is "+data)
-//         }
-//     });
-//     disableInput();
-// }
+
+function isGameOver(){
+    return ($('#text').text()===$('#template_text').val());
+}
+
+function handleGameOver(current_user_id, text_id) {
+    displayAccuracy(current_user_id);
+    $.ajax({
+        url: "http://localhost:3000/type_races/"+text_id,
+        type: "GET",
+        success: function (response) {
+          var len = response.length;
+          for(var i= 0; i<len; i++){
+              var desc = response[i];
+              // console.log("The description is "+desc);
+          }
+        },
+        error: function (data) {
+            console.log("The error is "+data)
+        }
+    });
+    disableInput();
+}
 
 function displayAccuracy(current_user_id) {
     var textCharLen= $('#text').text().length;
