@@ -23,8 +23,8 @@ $(document).on("turbolinks:load", function () {
             success: function (data, status) {
                 console.log("Template text is "+template_text);
                 console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status);
-                giveColorFeedback(text,template_text);
-                updateProgressBar(text,template_text, current_user_id);
+                giveColorFeedback(text, template_text);
+                updateProgressBar(text, template_text, current_user_id);
                 updateWPM(current_user_id);
                 if (isGameOver() == true){
                     handleGameOver(current_user_id, text_id);
@@ -37,32 +37,35 @@ $(document).on("turbolinks:load", function () {
         });
     });
 
-    // if  data attribute is controller action with type_race and poll then do polling
 
     function poll(){
-        // console.log(clear());
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
-        // alert(user_text_id);
+        var current_page_user_id = $(".current_user")[0].id;
+
         $.ajax({
             type: "GET",
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
-                // debugger;
                 console.log("Poll Data is" + data.text["current_user_id"] );
-                updateProgressBar(text,template_text, data.text["current_user_id"]);
-                updateWPM(data.text["current_user_id"]);
+                var  current_user_id = data.text["current_user_id"];
+                var  current_template_text = data.text["text_area"];
+                current_template_text == null ?  current_template_text = "" : current_template_text = data.text["text_area"];
+                console.log("c text "+current_template_text);
+                // debugger;
+                updateProgressBar(text, current_template_text, current_user_id);
+                updateWPM(current_user_id);
                 if (isGameOver() == true){
-                    handleGameOver(current_user_id, text_id);
+                    handleGameOver(current_page_user_id, text_id);
                 }
                 //Send another request in 10 seconds.
                 setTimeout(function(){
                     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
                         poll();
                     }
-                }, 1000);
+                }, 10000);
             },
             error: function (error) {
                 alert("The error is "+ error);
@@ -75,7 +78,6 @@ $(document).on("turbolinks:load", function () {
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
         poll();
     }
-    // poll();
     //Call our function
 
     $("#template_text").on("input",function(event){
@@ -114,20 +116,25 @@ function updateWPM(current_user_id){
     $('#checkWpm'+ current_user_id).text(wpm);
 }
 
-function updateProgressBar(text,template_text, current_user_id){
+
+function updateProgressBar(text, template_text, current_user_id){
+    debugger;
+    console.log("Template text is:"+template_text);
+    console.log("Template_text length is"+template_text.length);
     var percentage = 3 + getProgress();
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
     var currentCharIndex = template_text.length-1;
-    currentCharIndex < 0 ? currentCharIndex = 0 : currentCharIndex;
-    // console.log("currentCharIndex is"+currentCharIndex );
+    console.log(currentCharIndex);
+    // debugger;
     for(var i = 0; i <template_text.length; i++) {
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
-            // console.log("A"+template_text[currentCharIndex]);
             $(progressBar).css("width", percentage + "%" );
         }
     }
 }
+
+
 
 function getProgress(){
     var template_text_length = $("#template_text").val().length;
