@@ -21,12 +21,11 @@ $(document).on("turbolinks:load", function () {
             dataType: "json",
             data :{"text_area": template_text, "current_user_id": current_user_id},
             success: function (data, status) {
-                console.log("Template text is "+template_text)
-                console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status)
-                updateProgressBar(text,template_text, current_user_id);
+                console.log("Template text is "+template_text);
+                console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status);
                 giveColorFeedback(text,template_text);
+                updateProgressBar(text,template_text, current_user_id);
                 updateWPM(current_user_id);
-
                 if (isGameOver() == true){
                     handleGameOver(current_user_id, text_id);
                 }
@@ -38,28 +37,44 @@ $(document).on("turbolinks:load", function () {
         });
     });
 
-    // function poll(){
-    //     var text = $("#text").text();
-    //     var user_text_id = $("#text_id").val();
-    //     var template_text =  $("#template_text").val();
-    //     // alert(user_text_id);
-    //     $.ajax({
-    //         type: "GET",
-    //         url: "http://localhost:3000/type_races/poll/"+user_text_id,
-    //         success:function(data)
-    //         {
-    //             console.log("Poll Data is" + data.text["current_user_id"] );
-    //             updateProgressBar(text,template_text, data.text["current_user_id"]);
-    //             updateWPM(data.text["current_user_id"]);
-    //
-    //             //Send another request in 10 seconds.
-    //             setTimeout(function(){
-    //                 poll();
-    //             }, 10000);
-    //         }
-    //     });
-    // }
-    //
+    // if  data attribute is controller action with type_race and poll then do polling
+
+    function poll(){
+        // console.log(clear());
+        var text = $("#text").text();
+        var text_id = $("#text_id").val();
+        var template_text =  $("#template_text").val();
+        // alert(user_text_id);
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:3000/type_races/poll/"+text_id,
+            success:function(data)
+            {
+                // debugger;
+                console.log("Poll Data is" + data.text["current_user_id"] );
+                updateProgressBar(text,template_text, data.text["current_user_id"]);
+                updateWPM(data.text["current_user_id"]);
+                if (isGameOver() == true){
+                    handleGameOver(current_user_id, text_id);
+                }
+                //Send another request in 10 seconds.
+                setTimeout(function(){
+                    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+                        poll();
+                    }
+                }, 1000);
+            },
+            error: function (error) {
+                alert("The error is "+ error);
+                console.log("The error is "+error);
+            }
+        });
+    }
+
+
+    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+        poll();
+    }
     // poll();
     //Call our function
 
