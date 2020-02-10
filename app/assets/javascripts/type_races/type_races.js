@@ -11,9 +11,9 @@ $(document).on("turbolinks:load", function () {
         $('#template_text').val("");
     });
 
-    // if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-    //     poll();
-    // }
+    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+        poll();
+    }
 
     $("#template_text").keyup(function(){
         var text = $("#text").text();
