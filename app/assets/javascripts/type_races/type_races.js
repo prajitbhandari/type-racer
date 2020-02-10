@@ -1,6 +1,7 @@
 var countCharacters=0;
 var startTime;
-var userKeyPressCount=0;
+var userKeyPressCount1=0;
+var userKeyPressCount2=0;
 
 $(document).on("turbolinks:load", function () {
     //Our custom function.
@@ -9,6 +10,10 @@ $(document).on("turbolinks:load", function () {
         $('#template_text').focus();
         $('#template_text').val("");
     });
+
+    // if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+    //     poll();
+    // }
 
     $("#template_text").keyup(function(){
         var text = $("#text").text();
@@ -27,8 +32,8 @@ $(document).on("turbolinks:load", function () {
                 giveColorFeedback(text, template_text);
                 updateProgressBar(text, template_text, current_user_id);
                 updateWPM(current_user_id);
-                if (isGameOver() == true){
-                    handleGameOver(current_user_id, text_id);
+                if (isGameOver(text, template_text) == true){
+                    handleGameOver(current_user_id, text_id, text);
                 }
             },
             error: function (error) {
@@ -38,30 +43,27 @@ $(document).on("turbolinks:load", function () {
         });
     });
 
-
     function poll(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
         var current_page_user_id = $(".current_user")[0].id;
-
         $.ajax({
             type: "GET",
             cache: false,
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
-                console.log("Poll Data is" + data.text["current_user_id"] );
-                var  current_user_id = data.text["current_user_id"];
                 var  current_template_text = data.text["text_area"];
+                var current_user_id = data.text["current_user_id"];
                 current_template_text == null ?  current_template_text = "" : current_template_text = data.text["text_area"];
                 console.log("c text "+current_template_text);
                 console.log("current Page user is "+ current_page_user_id );
                 console.log("current game user is "+ data.text["current_user_id"]);
                 updateProgressBar(text, current_template_text, current_user_id);
                 updateWPM(current_user_id);
-                if (isGameOver() == true){
-                    handleGameOver(current_page_user_id, text_id);
+                if (isGameOver(text, current_template_text) == true){
+                    handleGameOver(current_user_id, text_id, text);
                 }
                 //Send another request in 10 seconds.
                 setTimeout(function(){
@@ -78,24 +80,23 @@ $(document).on("turbolinks:load", function () {
     }
 
 
-    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-        poll();
-    }
-    //Call our function
 
-    $("#template_text").on("input",function(event){
-        if (startTime === undefined) {
-            startTime = new Date($.now());
-        }
+    // $("#template_text").on("input",function(event){
+    //     var modifierKeyKeyCodes = [16,17,18,20,27,37,38,39,40,46];
+    //     var current_user_id =  $(".current_user")[0].id;
+    //     if (modifierKeyKeyCodes.includes(event.keyCode) == false) {
+    //         if ( current_user_id == 1){
+    //             debugger;
+    //             userKeyPressCount1++;
+    //         }else{
+    //             userKeyPressCount2++;
+    //         }
+    //     }
+    // });
 
-        var modifierKeyKeyCodes = [16,17,18,20,27,37,38,39,40,46];
-        if (modifierKeyKeyCodes.includes(event.keyCode) == false) {
-            userKeyPressCount++;
-        }
+});// end of DOM
 
 
-    });
-});
 
 function arrayOfText() {
     var textTemplate=$("#text").text();
@@ -107,10 +108,12 @@ function arrayOfText() {
     $("#text").html(textTemplateSpanified);
 }
 
-
 function updateWPM(current_user_id){
     countCharacters += 1;
     var currentTime=new Date($.now());
+    if (isNaN(startTime) == true){
+        startTime = 0;
+    }
     var timeInSecs = (currentTime-startTime)/1000;
     var timeInMins = timeInSecs/60;
     var wordsWritten = countCharacters/5;
@@ -121,8 +124,6 @@ function updateWPM(current_user_id){
 
 
 function updateProgressBar(text, template_text, current_user_id){
-    console.log("Template text is:"+template_text);
-    console.log("Template_text length is"+template_text.length);
     var percentage = 3 + getProgress(text, template_text);
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
@@ -131,7 +132,6 @@ function updateProgressBar(text, template_text, current_user_id){
     for(var i = 0; i <template_text.length; i++) {
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
             $(progressBar).css("width", percentage + "%" );
-            console.log($(progressBar).css("width"));
         }
     }
 }
@@ -155,12 +155,13 @@ function giveColorFeedback(text,template_text){
     }
 }
 
-function isGameOver(){
-    return ($('#text').text()===$('#template_text').val());
+function isGameOver(text, template_text){
+    return (text === template_text);
+    // return ($('#text').text()===$('#template_text').val());
 }
 
-function handleGameOver(current_user_id, text_id) {
-    displayAccuracy(current_user_id);
+function handleGameOver(current_user_id, text_id, text) {
+    displayAccuracy(current_user_id, text);
     $.ajax({
         url: "http://localhost:3000/type_races/"+text_id,
         type: "GET",
@@ -178,15 +179,22 @@ function handleGameOver(current_user_id, text_id) {
     disableInput();
 }
 
-function displayAccuracy(current_user_id) {
-    var textCharLen= $('#text').text().length;
-    var userKeyPressInputCharLen=userKeyPressCount;
+function displayAccuracy(current_user_id, text) {
+    // var textCharLen= $('#text').text().length;
+    var textCharLen= text.length;
+    userKeyPressInputCharLen= userKeyPressCount2;
     var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
+    if (accuracy == Infinity){
+        accuracy = 0
+    }
     accuracy=Math.round( accuracy );
     accuracy=Math.round( accuracy );
+
     $('.showAccuracy').show("fast");
     $('#accuracy'+current_user_id).text(accuracy);
+
 }
+
 function disableInput() {
     $('#template_text').prop('disabled', true);
 }

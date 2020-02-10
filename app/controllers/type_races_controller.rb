@@ -16,7 +16,12 @@ class TypeRacesController < ApplicationController
     pending_race = TypeRace.pending.last
     if pending_race
       pending_race.users << User.all
-      pending_race.update(current_user_id: current_user.id, status: "ongoing")
+      pending_race.update(current_user_id: current_user.id)
+      if pending_race.users.count > 1
+        pending_race.update(status: "ongoing")
+      else
+        pending_race.update(status: "pending")
+      end
       redirect_to type_race_path(pending_race)
     else
       @templates = RaceTemplate.all.sample
