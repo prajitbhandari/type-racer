@@ -19,10 +19,11 @@ $(document).on("turbolinks:load", function () {
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
             dataType: "json",
+            cache: false,
             data :{"text_area": template_text, "current_user_id": current_user_id},
             success: function (data, status) {
                 console.log("Template text is "+template_text);
-                console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status);
+                // console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status);
                 giveColorFeedback(text, template_text);
                 updateProgressBar(text, template_text, current_user_id);
                 updateWPM(current_user_id);
@@ -46,6 +47,7 @@ $(document).on("turbolinks:load", function () {
 
         $.ajax({
             type: "GET",
+            cache: false,
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
@@ -54,7 +56,8 @@ $(document).on("turbolinks:load", function () {
                 var  current_template_text = data.text["text_area"];
                 current_template_text == null ?  current_template_text = "" : current_template_text = data.text["text_area"];
                 console.log("c text "+current_template_text);
-                // debugger;
+                console.log("current Page user is "+ current_page_user_id );
+                console.log("current game user is "+ data.text["current_user_id"]);
                 updateProgressBar(text, current_template_text, current_user_id);
                 updateWPM(current_user_id);
                 if (isGameOver() == true){
@@ -118,27 +121,24 @@ function updateWPM(current_user_id){
 
 
 function updateProgressBar(text, template_text, current_user_id){
-    debugger;
     console.log("Template text is:"+template_text);
     console.log("Template_text length is"+template_text.length);
-    var percentage = 3 + getProgress();
+    var percentage = 3 + getProgress(text, template_text);
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
     var currentCharIndex = template_text.length-1;
     console.log(currentCharIndex);
-    // debugger;
     for(var i = 0; i <template_text.length; i++) {
         if (template_text[currentCharIndex] === text[currentCharIndex]) {
             $(progressBar).css("width", percentage + "%" );
+            console.log($(progressBar).css("width"));
         }
     }
 }
 
-
-
-function getProgress(){
-    var template_text_length = $("#template_text").val().length;
-    var quote_length = $("#text").text().length;
+function getProgress(text, template_text){
+    var template_text_length = template_text.length;
+    var quote_length = text.length;
     return ((template_text_length / quote_length) * 100);
 }
 

@@ -26,6 +26,7 @@ class TypeRacesController < ApplicationController
   end
 
   def poll
+    # debugger;
     @type_race = TypeRace.find(params[:id])
     respond_to do |format|
       format.json { render json: { text: @type_race } }

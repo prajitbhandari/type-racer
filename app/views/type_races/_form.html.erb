@@ -2,11 +2,11 @@
 <span id="text"><%= @templates.text %></span>
 <!--Display only those users who are logged in-->
 <% User.all.each do |user|%>
-  <div id = "barProgress">
+  <div class = "barProgress">
     <div  class = "newBar" id="newBar<%= user.id %>">
       <%=image_tag "car.jpg" ,width:50, height:42, class: "pull-right"%>
     </div>
-<!--    <span>User<%#=user.id%></span>-->
+    <span>User<%=user.id%></span>
   </div>
   <br>
 <% end %>
