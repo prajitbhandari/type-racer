@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  text_area: MyText
+  wpm: 1
+  type_race: one
+  user: one
+
+two:
+  text_area: MyText
+  wpm: 1
+  type_race: two
+  user: two

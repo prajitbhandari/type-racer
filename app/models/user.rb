@@ -12,5 +12,6 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
 
-  has_and_belongs_to_many :type_races
+  has_many :type_race_stats
+  has_many :type_races
 end

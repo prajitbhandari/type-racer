@@ -11,9 +11,6 @@ $(document).on("turbolinks:load", function () {
         $('#template_text').val("");
     });
 
-    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-        poll();
-    }
 
     $("#template_text").keyup(function(){
         var text = $("#text").text();
@@ -25,10 +22,10 @@ $(document).on("turbolinks:load", function () {
             type: "PUT",
             dataType: "json",
             cache: false,
-            data :{"text_area": template_text, "current_user_id": current_user_id},
+            data :{"text_area": template_text, "wpm": 33},
             success: function (data, status) {
-                console.log("Template text is "+template_text);
-                // console.log("data is :"+ data.text["current_user_id"] + " "+ "Status is "+ status);
+                // console.log("The data is"+ data.text["current_user"]);
+                // console.log("Template text is "+template_text);
                 giveColorFeedback(text, template_text);
                 updateProgressBar(text, template_text, current_user_id);
                 updateWPM(current_user_id);
@@ -37,7 +34,7 @@ $(document).on("turbolinks:load", function () {
                 }
             },
             error: function (error) {
-                alert("The error is "+ error);
+                // alert("The error is "+ error);
                 console.log("The error is "+error);
             }
         });
@@ -54,14 +51,16 @@ $(document).on("turbolinks:load", function () {
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
-                var  current_template_text = data.text["text_area"];
-                var current_user_id = data.text["current_user_id"];
-                current_template_text == null ?  current_template_text = "" : current_template_text = data.text["text_area"];
-                console.log("c text "+current_template_text);
-                console.log("current Page user is "+ current_page_user_id );
-                console.log("current game user is "+ data.text["current_user_id"]);
-                updateProgressBar(text, current_template_text, current_user_id);
-                updateWPM(current_user_id);
+                // alert("Poll data is"+ data.text["current_user_id"]);
+                for(let i = 0; i< data.user.length; i++){
+                    var current_template_text = data.user[i]["text_area"];
+                    var current_user_id = data.user[i]["id"];
+                    current_template_text == null ?  current_template_text = "" : current_template_text = data.user[i]["text_area"];
+                    updateProgressBar(text, current_template_text, current_user_id);
+                    updateWPM(current_user_id);
+                }
+
+
                 if (isGameOver(text, current_template_text) == true){
                     handleGameOver(current_user_id, text_id, text);
                 }
@@ -79,7 +78,9 @@ $(document).on("turbolinks:load", function () {
         });
     }
 
-
+    // if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+    //     poll();
+    // }
 
     // $("#template_text").on("input",function(event){
     //     var modifierKeyKeyCodes = [16,17,18,20,27,37,38,39,40,46];
