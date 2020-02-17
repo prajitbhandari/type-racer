@@ -21,7 +21,6 @@ class TypeRacesController < ApplicationController
     else
       @templates = RaceTemplate.all.sample
       @type_race = TypeRace.create(race_templates_id: @templates.id, status: "pending")
-      @type_race.users << User.all
       redirect_to type_race_path(@type_race)
     end
   end

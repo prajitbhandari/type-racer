@@ -1,9 +1,10 @@
 var countCharacters=0;
-var startTime;
-var userKeyPressCount1=0;
-var userKeyPressCount2=0;
-
+var word_error_count = 0;
+var userKeyPressCount=0;
+var sec = 0;
 $(document).on("turbolinks:load", function () {
+
+    gameStatus();
     //Our custom function.
     arrayOfText();
     $("button").on("click",function () {
@@ -11,30 +12,31 @@ $(document).on("turbolinks:load", function () {
         $('#template_text').val("");
     });
 
-
     $("#template_text").keyup(function(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
         var current_user_id = $(".current_user")[0].id;
+        var wpm = $("#checkWpm"+current_user_id).val();
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
             dataType: "json",
             cache: false,
-            data :{"text_area": template_text, "wpm": 33},
+            data :{"text_area": template_text, "wpm": wpm},
             success: function (data, status) {
                 // console.log("The data is"+ data.text["current_user"]);
                 // console.log("Template text is "+template_text);
                 giveColorFeedback(text, template_text);
                 updateProgressBar(text, template_text, current_user_id);
-                updateWPM(current_user_id);
+                let  error_count = checkWordErrorCount(text, template_text);
+                updateWPM(current_user_id, template_text, error_count);
+                userKeyPressCount++;
                 if (isGameOver(text, template_text) == true){
                     handleGameOver(current_user_id, text_id, text);
                 }
             },
             error: function (error) {
-                // alert("The error is "+ error);
                 console.log("The error is "+error);
             }
         });
@@ -51,16 +53,19 @@ $(document).on("turbolinks:load", function () {
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
-                // alert("Poll data is"+ data.text["current_user_id"]);
-                for(let i = 0; i< data.user.length; i++){
-                    var current_template_text = data.user[i]["text_area"];
-                    var current_user_id = data.user[i]["id"];
-                    current_template_text == null ?  current_template_text = "" : current_template_text = data.user[i]["text_area"];
-                    updateProgressBar(text, current_template_text, current_user_id);
-                    updateWPM(current_user_id);
+                if (data.stat.length >1){
+                    $("#gameTimer").html("Ready For Race");
+                }else{
+                    $("#gameTimer").html("Looking For Competitor");
                 }
-
-
+                for(let i = 0; i< data.stat.length; i++){
+                    var current_template_text = data.stat[i]["text_area"];
+                    var current_user_id = data.stat[i]["user_id"];
+                    var current_wpm = $("#checkWpm"+current_user_id).val();
+                    current_template_text == null ?  current_template_text = "" : current_template_text = data.stat[i]["text_area"];
+                    updateProgressBar(text, current_template_text, current_user_id);
+                    // pollWPM(current_user_id, current_template_text, current_wpm);
+                }
                 if (isGameOver(text, current_template_text) == true){
                     handleGameOver(current_user_id, text_id, text);
                 }
@@ -78,26 +83,26 @@ $(document).on("turbolinks:load", function () {
         });
     }
 
-    // if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-    //     poll();
-    // }
 
-    // $("#template_text").on("input",function(event){
-    //     var modifierKeyKeyCodes = [16,17,18,20,27,37,38,39,40,46];
-    //     var current_user_id =  $(".current_user")[0].id;
-    //     if (modifierKeyKeyCodes.includes(event.keyCode) == false) {
-    //         if ( current_user_id == 1){
-    //             debugger;
-    //             userKeyPressCount1++;
-    //         }else{
-    //             userKeyPressCount2++;
-    //         }
-    //     }
-    // });
+    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
+       setInterval( function(){
+           ++sec;
+        }, 1000);
+       poll();
+    }
 
 });// end of DOM
 
 
+function gameStatus(){
+    var get_stat_count = parseInt($("#stat_count").text());
+    if (get_stat_count >1){
+        $("#gameTimer").html("Ready For Race");
+    }else{
+        $("#gameTimer").html("Looking For Competitor");
+    }
+
+}
 
 function arrayOfText() {
     var textTemplate=$("#text").text();
@@ -109,18 +114,30 @@ function arrayOfText() {
     $("#text").html(textTemplateSpanified);
 }
 
-function updateWPM(current_user_id){
-    countCharacters += 1;
-    var currentTime=new Date($.now());
-    if (isNaN(startTime) == true){
-        startTime = 0;
+
+function checkWordErrorCount(text, template_text){
+    for(let i= 0; i< template_text.length; i++){
+        if (text[i] != template_text[i]){
+            word_error_count += 1
+        }
     }
-    var timeInSecs = (currentTime-startTime)/1000;
+    return word_error_count;
+}
+
+function updateWPM(current_user_id, current_template_text, word_error_count){
+    debugger;
+    countCharacters += 1;
+    var currentTime = new Date().getTime()/1000;
+    console.log("Current Time is "+ currentTime);
+    var timeInSecs = currentTime-sec;
     var timeInMins = timeInSecs/60;
     var wordsWritten = countCharacters/5;
-    var wpm = wordsWritten/timeInMins;
+    var wpm = wordsWritten-word_error_count/timeInMins;
+    console.log("WPM"+wpm);
     wpm = parseInt(wpm,10);
+    console.log("WPM AFTER"+wpm);
     $('#checkWpm'+ current_user_id).text(wpm);
+
 }
 
 
@@ -183,17 +200,11 @@ function handleGameOver(current_user_id, text_id, text) {
 function displayAccuracy(current_user_id, text) {
     // var textCharLen= $('#text').text().length;
     var textCharLen= text.length;
-    userKeyPressInputCharLen= userKeyPressCount2;
+    var userKeyPressInputCharLen= userKeyPressCount;
     var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
-    if (accuracy == Infinity){
-        accuracy = 0
-    }
     accuracy=Math.round( accuracy );
-    accuracy=Math.round( accuracy );
-
     $('.showAccuracy').show("fast");
     $('#accuracy'+current_user_id).text(accuracy);
-
 }
 
 function disableInput() {
@@ -207,3 +218,6 @@ var quotes = ["Hello there", "Genius is one percent inspiration and ninety-nine 
     "We can only learn to love by loving.","Life is change. Growth is optional. Choose wisely.","You'll see it when you believe it."
     ,"Today is the tomorrow we worried about yesterday.","It's easier to see the mistakes on someone else's paper."
     , "Every man dies. Not every man really lives.","To lead people walk behind them.","Having nothing, nothing can he lose."]
+
+
+

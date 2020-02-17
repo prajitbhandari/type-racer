@@ -2,7 +2,7 @@
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
-.showAccuracy{
+.showAccuracy, #stat_count{
   display: none;
 }
 
@@ -22,4 +22,8 @@
 .newBar {
   width: 50px;
   height: 42px;
+}
+
+stat_count{
+
 }

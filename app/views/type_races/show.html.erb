@@ -1,4 +1,6 @@
 <h1>You are in Game <%= @type_race.id %></h1>
+<span id = "stat_count"><%= @type_race.type_race_stats.count%></span>
+<span id = "gameTimer"> </span>
 <p> All The users in this Type race are </p>
 <% User.all.each do |user| %>
   <li class="race_users"><%= user.id%></li>
