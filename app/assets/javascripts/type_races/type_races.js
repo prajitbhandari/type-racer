@@ -1,11 +1,11 @@
 var countCharacters=0;
 var word_error_count = 0;
 var userKeyPressCount=0;
+var start = 10;
 var sec = 0;
+var get_sec = 0;
 $(document).on("turbolinks:load", function () {
-
-    gameStatus();
-    //Our custom function.
+    initialGameStatus();
     arrayOfText();
     $("button").on("click",function () {
         $('#template_text').focus();
@@ -53,11 +53,7 @@ $(document).on("turbolinks:load", function () {
             url: "http://localhost:3000/type_races/poll/"+text_id,
             success:function(data)
             {
-                if (data.stat.length >1){
-                    $("#gameTimer").html("Ready For Race");
-                }else{
-                    $("#gameTimer").html("Looking For Competitor");
-                }
+                gameStatus(data);
                 for(let i = 0; i< data.stat.length; i++){
                     var current_template_text = data.stat[i]["text_area"];
                     var current_user_id = data.stat[i]["user_id"];
@@ -74,7 +70,7 @@ $(document).on("turbolinks:load", function () {
                     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
                         poll();
                     }
-                }, 10000);
+                }, 1000);
             },
             error: function (error) {
                 alert("The error is "+ error);
@@ -87,22 +83,46 @@ $(document).on("turbolinks:load", function () {
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
        setInterval( function(){
            ++sec;
-        }, 1000);
+        }, 5000);
        poll();
+    }
+
+    function gameStatus(data){
+        if (data.stat.length >1){
+            var statusInterval = setInterval( function(){
+                --start;
+                if (start <= 0){
+                    $("#gameTimer").html("");
+                    clearInterval(statusInterval);
+                    function pad ( val ) { return val > 9 ? val : "0" + val; }
+                    setInterval( function(){
+                        $("#seconds").html(pad(++get_sec%60));
+                        $("#minutes").html(pad(parseInt(get_sec/60,10)));
+                    }, 5000);
+
+                }else{
+                    $("#gameTimer").html("Wating For"+ start);
+                }
+            }, 5000);
+
+        }else{
+            $("#gameTimer").html("Looking For Competitor");
+        }
+
     }
 
 });// end of DOM
 
 
-function gameStatus(){
-    var get_stat_count = parseInt($("#stat_count").text());
-    if (get_stat_count >1){
+function  initialGameStatus(){
+    var statcount = parseInt($('#stat_count').text());
+    if (statcount >1){
         $("#gameTimer").html("Ready For Race");
     }else{
         $("#gameTimer").html("Looking For Competitor");
     }
-
 }
+
 
 function arrayOfText() {
     var textTemplate=$("#text").text();
