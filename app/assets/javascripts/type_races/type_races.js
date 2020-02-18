@@ -3,9 +3,9 @@ var word_error_count = 0;
 var userKeyPressCount=0;
 var start = 10;
 var sec = 0;
-var get_sec = 0;
+var get_sec = 30;
+var get_min = 1;
 $(document).on("turbolinks:load", function () {
-    initialGameStatus();
     arrayOfText();
     $("button").on("click",function () {
         $('#template_text').focus();
@@ -79,11 +79,11 @@ $(document).on("turbolinks:load", function () {
         });
     }
 
-
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-       setInterval( function(){
+        initialGameStatus();
+        setInterval( function(){
            ++sec;
-        }, 5000);
+        }, 1000);
        poll();
     }
 
@@ -93,12 +93,26 @@ $(document).on("turbolinks:load", function () {
                 --start;
                 if (start <= 0){
                     $("#gameTimer").html("");
+                    if (get_min ==0 && get_sec ==0){
+                        $("span#minutes").html("00");
+                        $("span#seconds").html("00");
+                    }else{
+                        $("span#minutes").html(get_min);
+                        $("span#seconds").html(get_sec);
+                    }
                     clearInterval(statusInterval);
                     function pad ( val ) { return val > 9 ? val : "0" + val; }
-                    setInterval( function(){
-                        $("#seconds").html(pad(++get_sec%60));
-                        $("#minutes").html(pad(parseInt(get_sec/60,10)));
-                    }, 5000);
+                    var timerInterval = setInterval( function(){
+                            if(get_sec <=0 && get_min <=0){
+                                $("span#minutes").html(pad(parseInt(get_min)));
+                                $("span#seconds").html(pad(parseInt(get_sec)));
+                                clearInterval(timerInterval);
+                            }else if(get_sec >=1){
+                                $("span#seconds").html(pad(parseInt(--get_sec)));
+                            }else{
+                                $("span#minutes").html(pad(parseInt(--get_min)));
+                            }
+                        }, 5000);
 
                 }else{
                     $("#gameTimer").html("Wating For"+ start);
