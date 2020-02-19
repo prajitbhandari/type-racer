@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_13_063550) do
+ActiveRecord::Schema.define(version: 2020_02_19_042544) do
 
   create_table "race_templates", force: :cascade do |t|
     t.text "text"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(version: 2020_02_13_063550) do
     t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "accuracy"
     t.index ["type_race_id"], name: "index_type_race_stats_on_type_race_id"
     t.index ["user_id"], name: "index_type_race_stats_on_user_id"
   end

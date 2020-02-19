@@ -1,10 +1,10 @@
 var countCharacters=0;
 var word_error_count = 0;
 var userKeyPressCount=0;
+var startTime;
 var start = 10;
 var sec = 0;
-var get_sec = 30;
-var get_min = 1;
+var timer = 60*5;
 $(document).on("turbolinks:load", function () {
     arrayOfText();
     $("button").on("click",function () {
@@ -15,26 +15,28 @@ $(document).on("turbolinks:load", function () {
     $("#template_text").keyup(function(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
-        var template_text =  $("#template_text").val();
+        var template_text = $("#template_text").val();
         var current_user_id = $(".current_user")[0].id;
-        var wpm = $("#checkWpm"+current_user_id).val();
+        // var wpm = $("#checkWpm"+current_user_id).val();
+
+        userKeyPressCount++;
+        giveColorFeedback(text, template_text);
+        updateProgressBar(text, template_text, current_user_id);
+        var  error_count = checkWordErrorCount(text, template_text);
+        var post_wpm = updateWPM(current_user_id, template_text, error_count);
+
+
+        if (isGameOver(text, template_text) == true){
+             var accuracy = handleGameOver(current_user_id, text_id, text);
+        }
+
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
             dataType: "json",
-            cache: false,
-            data :{"text_area": template_text, "wpm": wpm},
+            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
             success: function (data, status) {
-                // console.log("The data is"+ data.text["current_user"]);
-                // console.log("Template text is "+template_text);
-                giveColorFeedback(text, template_text);
-                updateProgressBar(text, template_text, current_user_id);
-                let  error_count = checkWordErrorCount(text, template_text);
-                updateWPM(current_user_id, template_text, error_count);
-                userKeyPressCount++;
-                if (isGameOver(text, template_text) == true){
-                    handleGameOver(current_user_id, text_id, text);
-                }
+               console.log("The success is"+status);
             },
             error: function (error) {
                 console.log("The error is "+error);
@@ -47,23 +49,48 @@ $(document).on("turbolinks:load", function () {
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
         var current_page_user_id = $(".current_user")[0].id;
+
         $.ajax({
             type: "GET",
             cache: false,
             url: "http://localhost:3000/type_races/poll/"+text_id,
-            success:function(data)
+            success:function(response)
             {
-                gameStatus(data);
-                for(let i = 0; i< data.stat.length; i++){
-                    var current_template_text = data.stat[i]["text_area"];
-                    var current_user_id = data.stat[i]["user_id"];
-                    var current_wpm = $("#checkWpm"+current_user_id).val();
-                    current_template_text == null ?  current_template_text = "" : current_template_text = data.stat[i]["text_area"];
-                    updateProgressBar(text, current_template_text, current_user_id);
-                    // pollWPM(current_user_id, current_template_text, current_wpm);
+                gameStatus(response);
+                var error_count = checkWordErrorCount(text, template_text);
+                var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
+                if (isGameOver(text, template_text) == true){
+                    var accuracy = handleGameOver(current_page_user_id, text_id, text);
+                }else{
+                    accuracy = 0;
                 }
-                if (isGameOver(text, current_template_text) == true){
-                    handleGameOver(current_user_id, text_id, text);
+
+                $.ajax({
+                    url: "http://localhost:3000/type_races/"+text_id,
+                    type: "PUT",
+                    dataType: "json",
+                    data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
+                    success: function (data, status) {
+                        console.log("The success is"+status);
+                    },
+                    error: function (error) {
+                        console.log("The error is "+error);
+                    }
+                });
+
+                for(let i = 0; i< response.stat.length; i++){
+                    var current_template_text = response.stat[i]["text_area"];
+                    var current_user_id = response.stat[i]["user_id"];
+                    var current_wpm = response.stat[i]["wpm"];
+                    var current_accuracy = response.stat[i]["accuracy"];
+                    current_template_text == null ?  current_template_text = "" : current_template_text = response.stat[i]["text_area"];
+                    current_wpm == null ?  current_wpm = 0 : current_wpm = response.stat[i]["wpm"];
+                    current_accuracy == null ?  current_accuracy = 0 : current_accuracy = response.stat[i]["accuracy"];
+                    updateProgressBar(text, current_template_text, current_user_id);
+                    pollWPM(current_user_id, current_wpm);
+                    if (isGameOver(text, current_template_text) == true){
+                        pollAccuracy(current_user_id, current_accuracy);
+                    }
                 }
                 //Send another request in 10 seconds.
                 setTimeout(function(){
@@ -81,10 +108,13 @@ $(document).on("turbolinks:load", function () {
 
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
         initialGameStatus();
-        setInterval( function(){
+        var wpmInterval = setInterval( function(){
            ++sec;
         }, 1000);
-       poll();
+        if(startTime == undefined){
+            startTime = new Date($.now())/1000;
+        }
+        poll();
     }
 
     function gameStatus(data){
@@ -93,40 +123,33 @@ $(document).on("turbolinks:load", function () {
                 --start;
                 if (start <= 0){
                     $("#gameTimer").html("");
-                    if (get_min ==0 && get_sec ==0){
-                        $("span#minutes").html("00");
-                        $("span#seconds").html("00");
-                    }else{
-                        $("span#minutes").html(get_min);
-                        $("span#seconds").html(get_sec);
-                    }
                     clearInterval(statusInterval);
-                    function pad ( val ) { return val > 9 ? val : "0" + val; }
-                    var timerInterval = setInterval( function(){
-                            if(get_sec <=0 && get_min <=0){
-                                $("span#minutes").html(pad(parseInt(get_min)));
-                                $("span#seconds").html(pad(parseInt(get_sec)));
-                                clearInterval(timerInterval);
-                            }else if(get_sec >=1){
-                                $("span#seconds").html(pad(parseInt(--get_sec)));
-                            }else{
-                                $("span#minutes").html(pad(parseInt(--get_min)));
-                            }
-                        }, 5000);
-
+                    var timeInterval= setInterval(function () {
+                        var get_minutes = parseInt(timer/ 60, 10);
+                        var get_seconds = parseInt(timer% 60, 10);
+                        get_minutes = get_minutes < 10 ? "0" + get_minutes : get_minutes;
+                        get_seconds = get_seconds < 10 ? "0" + get_seconds : get_seconds;
+                        $("span#minutes").html(get_minutes.toString() + ":");
+                        $("span#seconds").html(get_seconds.toString());
+                        if (--timer <= 0) {
+                            $("span#minutes").html("00:");
+                            $("span#seconds").html("00");
+                            clearInterval(timeInterval);
+                            clearInterval(wpmInterval);
+                        }
+                    }, 5000);
                 }else{
-                    $("#gameTimer").html("Wating For"+ start);
+                    $("#gameTimer").html("Wating For "+start);
                 }
             }, 5000);
 
         }else{
-            $("#gameTimer").html("Looking For Competitor");
+            $("#gameTimer").html("Looking For Competitors");
         }
 
     }
 
 });// end of DOM
-
 
 function  initialGameStatus(){
     var statcount = parseInt($('#stat_count').text());
@@ -136,7 +159,6 @@ function  initialGameStatus(){
         $("#gameTimer").html("Looking For Competitor");
     }
 }
-
 
 function arrayOfText() {
     var textTemplate=$("#text").text();
@@ -148,7 +170,6 @@ function arrayOfText() {
     $("#text").html(textTemplateSpanified);
 }
 
-
 function checkWordErrorCount(text, template_text){
     for(let i= 0; i< template_text.length; i++){
         if (text[i] != template_text[i]){
@@ -159,36 +180,50 @@ function checkWordErrorCount(text, template_text){
 }
 
 function updateWPM(current_user_id, current_template_text, word_error_count){
-    debugger;
-    countCharacters += 1;
-    var currentTime = new Date().getTime()/1000;
-    console.log("Current Time is "+ currentTime);
-    var timeInSecs = currentTime-sec;
+    var currentTime = new Date($.now())/1000;
+    if(isNaN(startTime)){
+        startTime = new Date($.now())/1000;
+    }
+    var timeInSecs = currentTime-startTime;
     var timeInMins = timeInSecs/60;
-    var wordsWritten = countCharacters/5;
-    var wpm = wordsWritten-word_error_count/timeInMins;
-    console.log("WPM"+wpm);
-    wpm = parseInt(wpm,10);
-    console.log("WPM AFTER"+wpm);
-    $('#checkWpm'+ current_user_id).text(wpm);
+    var wordsWritten = current_template_text.length/5;
+    var wpm = 0;
+    if (word_error_count > wordsWritten){
+        wpm = 0;
+    }else{
+        wpm = (wordsWritten-word_error_count)/timeInMins;
+    }
 
+    var get_wpm = parseInt(wpm,10);
+    $('#checkWpm'+ current_user_id).text(get_wpm);
+    return get_wpm;
 }
 
+function pollWPM(current_user_id, wpm){
+    $('#checkWpm'+ current_user_id).text(wpm);
+}
+
+function pollAccuracy(current_user_id, accuracy){
+
+    $('.showAccuracy').show("fast");
+    $('#accuracy'+current_user_id).text(accuracy);
+}
 
 function updateProgressBar(text, template_text, current_user_id){
-    var percentage = 3 + getProgress(text, template_text);
+    var percentage = 4 + getProgress(text, template_text);
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
     var currentCharIndex = template_text.length-1;
     console.log(currentCharIndex);
     for(var i = 0; i <template_text.length; i++) {
-        if (template_text[currentCharIndex] === text[currentCharIndex]) {
+        if (template_text[currentCharIndex] == text[currentCharIndex]) {
             $(progressBar).css("width", percentage + "%" );
         }
     }
 }
 
 function getProgress(text, template_text){
+    // debugger;
     var template_text_length = template_text.length;
     var quote_length = text.length;
     return ((template_text_length / quote_length) * 100);
@@ -213,7 +248,7 @@ function isGameOver(text, template_text){
 }
 
 function handleGameOver(current_user_id, text_id, text) {
-    displayAccuracy(current_user_id, text);
+    var accuracy = displayAccuracy(current_user_id, text);
     $.ajax({
         url: "http://localhost:3000/type_races/"+text_id,
         type: "GET",
@@ -229,6 +264,7 @@ function handleGameOver(current_user_id, text_id, text) {
         }
     });
     disableInput();
+    return accuracy;
 }
 
 function displayAccuracy(current_user_id, text) {
@@ -239,6 +275,7 @@ function displayAccuracy(current_user_id, text) {
     accuracy=Math.round( accuracy );
     $('.showAccuracy').show("fast");
     $('#accuracy'+current_user_id).text(accuracy);
+    return accuracy;
 }
 
 function disableInput() {
