@@ -44,12 +44,40 @@ $(document).on("turbolinks:load", function () {
         });
     });
 
+
+    function  checkWPM() {
+        var text = $("#text").text();
+        var text_id = $("#text_id").val();
+        var template_text =  $("#template_text").val();
+        var current_page_user_id = $(".current_user")[0].id;
+        var error_count = checkWordErrorCount(text, template_text);
+        var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
+        if (isGameOver(text, template_text) == true){
+            var accuracy = handleGameOver(current_page_user_id, text_id, text);
+        }else{
+            accuracy = 0;
+        }
+
+        $.ajax({
+            url: "http://localhost:3000/type_races/"+text_id,
+            type: "PUT",
+            dataType: "json",
+            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
+            success: function (data, status) {
+                console.log("This is updateword success");
+            },
+            error: function (error) {
+                console.log("The error is "+error);
+            }
+        });
+    }
+
+
     function poll(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
         var current_page_user_id = $(".current_user")[0].id;
-
         $.ajax({
             type: "GET",
             cache: false,
@@ -57,27 +85,6 @@ $(document).on("turbolinks:load", function () {
             success:function(response)
             {
                 gameStatus(response);
-                var error_count = checkWordErrorCount(text, template_text);
-                var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
-                if (isGameOver(text, template_text) == true){
-                    var accuracy = handleGameOver(current_page_user_id, text_id, text);
-                }else{
-                    accuracy = 0;
-                }
-
-                $.ajax({
-                    url: "http://localhost:3000/type_races/"+text_id,
-                    type: "PUT",
-                    dataType: "json",
-                    data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
-                    success: function (data, status) {
-                        console.log("The success is"+status);
-                    },
-                    error: function (error) {
-                        console.log("The error is "+error);
-                    }
-                });
-
                 for(let i = 0; i< response.stat.length; i++){
                     var current_template_text = response.stat[i]["text_area"];
                     var current_user_id = response.stat[i]["user_id"];
@@ -110,6 +117,7 @@ $(document).on("turbolinks:load", function () {
         initialGameStatus();
         var wpmInterval = setInterval( function(){
            ++sec;
+           checkWPM();
         }, 1000);
         if(startTime == undefined){
             startTime = new Date($.now())/1000;
