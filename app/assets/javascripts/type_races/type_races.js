@@ -1,10 +1,8 @@
-var countCharacters=0;
-var word_error_count = 0;
 var userKeyPressCount=0;
 var startTime;
 var start = 10;
-var sec = 0;
 var timer = 60*5;
+
 $(document).on("turbolinks:load", function () {
     arrayOfText();
     $("button").on("click",function () {
@@ -16,31 +14,25 @@ $(document).on("turbolinks:load", function () {
         var text = $("#text").text();
         var text_id = $("#text_id").val();
         var template_text = $("#template_text").val();
-        var current_user_id = $(".current_user")[0].id;
-        // var wpm = $("#checkWpm"+current_user_id).val();
+        var current_page_user_id = $(".current_user")[0].id;
 
         userKeyPressCount++;
         giveColorFeedback(text, template_text);
-        updateProgressBar(text, template_text, current_user_id);
-        var  error_count = checkWordErrorCount(text, template_text);
-        var post_wpm = updateWPM(current_user_id, template_text, error_count);
+        updateProgressBar(text, template_text, current_page_user_id);
 
+        var  error_count = checkWordErrorCount(text, template_text);
+        var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
 
         if (isGameOver(text, template_text) == true){
-             var accuracy = handleGameOver(current_user_id, text_id, text);
+            var accuracy = handleGameOver(current_page_user_id, text_id, text);
         }
 
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
             dataType: "json",
-            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
-            success: function (data, status) {
-               console.log("The success is"+status);
-            },
-            error: function (error) {
-                console.log("The error is "+error);
-            }
+            cache: false,
+            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy}
         });
     });
 
@@ -50,6 +42,7 @@ $(document).on("turbolinks:load", function () {
         var text_id = $("#text_id").val();
         var template_text =  $("#template_text").val();
         var current_page_user_id = $(".current_user")[0].id;
+
         var error_count = checkWordErrorCount(text, template_text);
         var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
         if (isGameOver(text, template_text) == true){
@@ -62,22 +55,20 @@ $(document).on("turbolinks:load", function () {
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
             dataType: "json",
-            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy},
-            success: function (data, status) {
-                console.log("This is updateword success");
-            },
-            error: function (error) {
-                console.log("The error is "+error);
-            }
+            cache: false,
+            data :{"text_area": template_text, "wpm": post_wpm, "accuracy": accuracy}
         });
+
+        wpm_interval = setTimeout( function(){
+            checkWPM();
+        }, 3000);
     }
 
 
     function poll(){
         var text = $("#text").text();
         var text_id = $("#text_id").val();
-        var template_text =  $("#template_text").val();
-        var current_page_user_id = $(".current_user")[0].id;
+
         $.ajax({
             type: "GET",
             cache: false,
@@ -101,9 +92,7 @@ $(document).on("turbolinks:load", function () {
                 }
                 //Send another request in 10 seconds.
                 setTimeout(function(){
-                    if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
-                        poll();
-                    }
+                    poll();
                 }, 1000);
             },
             error: function (error) {
@@ -115,13 +104,10 @@ $(document).on("turbolinks:load", function () {
 
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
         initialGameStatus();
-        var wpmInterval = setInterval( function(){
-           ++sec;
-           checkWPM();
-        }, 1000);
         if(startTime == undefined){
             startTime = new Date($.now())/1000;
         }
+        checkWPM();
         poll();
     }
 
@@ -143,7 +129,7 @@ $(document).on("turbolinks:load", function () {
                             $("span#minutes").html("00:");
                             $("span#seconds").html("00");
                             clearInterval(timeInterval);
-                            clearInterval(wpmInterval);
+                            // clearTimeout(wpmInterval);
                         }
                     }, 5000);
                 }else{
@@ -179,6 +165,7 @@ function arrayOfText() {
 }
 
 function checkWordErrorCount(text, template_text){
+    let word_error_count = 0;
     for(let i= 0; i< template_text.length; i++){
         if (text[i] != template_text[i]){
             word_error_count += 1
@@ -195,13 +182,12 @@ function updateWPM(current_user_id, current_template_text, word_error_count){
     var timeInSecs = currentTime-startTime;
     var timeInMins = timeInSecs/60;
     var wordsWritten = current_template_text.length/5;
-    var wpm = 0;
     if (word_error_count > wordsWritten){
-        wpm = 0;
+        debugger;
+        var wpm = 0;
     }else{
         wpm = (wordsWritten-word_error_count)/timeInMins;
     }
-
     var get_wpm = parseInt(wpm,10);
     $('#checkWpm'+ current_user_id).text(get_wpm);
     return get_wpm;
@@ -218,7 +204,7 @@ function pollAccuracy(current_user_id, accuracy){
 }
 
 function updateProgressBar(text, template_text, current_user_id){
-    var percentage = 4 + getProgress(text, template_text);
+    var percentage = 5 + getProgress(text, template_text);
     var progressBarSelector = $("#newBar"+current_user_id);
     var progressBar = $(progressBarSelector);
     var currentCharIndex = template_text.length-1;
@@ -231,7 +217,6 @@ function updateProgressBar(text, template_text, current_user_id){
 }
 
 function getProgress(text, template_text){
-    // debugger;
     var template_text_length = template_text.length;
     var quote_length = text.length;
     return ((template_text_length / quote_length) * 100);
@@ -252,20 +237,20 @@ function giveColorFeedback(text,template_text){
 
 function isGameOver(text, template_text){
     return (text === template_text);
-    // return ($('#text').text()===$('#template_text').val());
 }
 
 function handleGameOver(current_user_id, text_id, text) {
     var accuracy = displayAccuracy(current_user_id, text);
+    clearTimeout(wpm_interval);
     $.ajax({
         url: "http://localhost:3000/type_races/"+text_id,
         type: "GET",
+        cache: false,
         success: function (response) {
-          var len = response.length;
-          for(var i= 0; i<len; i++){
-              var desc = response[i];
-              // console.log("The description is "+desc);
-          }
+            var len = response.length;
+            for(var i= 0; i<len; i++){
+                var desc = response[i];
+            }
         },
         error: function (data) {
             console.log("The error is "+data)
@@ -276,7 +261,6 @@ function handleGameOver(current_user_id, text_id, text) {
 }
 
 function displayAccuracy(current_user_id, text) {
-    // var textCharLen= $('#text').text().length;
     var textCharLen= text.length;
     var userKeyPressInputCharLen= userKeyPressCount;
     var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
@@ -289,14 +273,4 @@ function displayAccuracy(current_user_id, text) {
 function disableInput() {
     $('#template_text').prop('disabled', true);
 }
-
-var quotes = ["Hello there", "Genius is one percent inspiration and ninety-nine percent perspiration.", "You can observe a lot just by watching.","A house divided against itself cannot stand.",
-    "Difficulties increase the nearer we get to the goal.","Fate is in your hands and no one elses",
-    "Be the chief but never the lord.","Nothing happens unless first we dream.","Well begun is half done.", "Life is a learning experience, only if you learn."
-    ,"Self-complacency is fatal to progress.","Peace comes from within. Do not seek it without.","What you give is what you get.",
-    "We can only learn to love by loving.","Life is change. Growth is optional. Choose wisely.","You'll see it when you believe it."
-    ,"Today is the tomorrow we worried about yesterday.","It's easier to see the mistakes on someone else's paper."
-    , "Every man dies. Not every man really lives.","To lead people walk behind them.","Having nothing, nothing can he lose."]
-
-
 

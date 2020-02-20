@@ -11,7 +11,7 @@
   <br>
 <% end %>
 
-<%= form_with(model:@type_racer,local:true) do |form| %>
+<%= form_with(model:@type_race,local:true) do |form| %>
   <div class="field">
     <%= form.text_area :text_area, id: :template_text, remote:true %>
     <span class ="match"> </span>

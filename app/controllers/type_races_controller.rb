@@ -19,7 +19,7 @@ class TypeRacesController < ApplicationController
       pending_race.update(status: "ongoing")
       redirect_to type_race_path(pending_race)
     else
-      @templates = RaceTemplate.first
+      @templates = RaceTemplate.last
       @type_race = TypeRace.create(race_templates_id: @templates.id, status: "pending")
       redirect_to type_race_path(@type_race)
     end
@@ -33,17 +33,17 @@ class TypeRacesController < ApplicationController
   end
 
   def update
-    @type_racer = TypeRace.find(params[:id])
+    @type_race = TypeRace.find(params[:id])
     respond_to do |format|
-      if @type_racer.type_race_stats.find_by(user_id: current_user.id).update_attributes(text_area: type_racer_params[:text_area], wpm: type_racer_params[:wpm], accuracy: type_racer_params[:accuracy])
-        format.json { render json: { stat: @type_racer.type_race_stats}, status: :ok}
+      if @type_race.type_race_stats.find_by(user_id: current_user.id).update_attributes(text_area: type_racer_params[:text_area], wpm: type_racer_params[:wpm], accuracy: type_racer_params[:accuracy])
+        format.json { render json: { stat: @type_race.type_race_stats}, status: :ok}
       end
     end
   end
 
   private
   def  type_racer_params
-    params.permit(:text_area, :user_id, :type_race_id, :wpm, :status, :accuracy)
+    params.permit(:text_area, :wpm, :accuracy)
   end
 
   def time_count
