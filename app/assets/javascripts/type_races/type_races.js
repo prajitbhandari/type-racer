@@ -1,6 +1,7 @@
+
 var userKeyPressCount=0;
 var startTime;
-var start = 10;
+var countdown = 10;
 var timer = 60*5;
 
 $(document).on("turbolinks:load", function () {
@@ -24,7 +25,7 @@ $(document).on("turbolinks:load", function () {
         var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
 
         if (isGameOver(text, template_text) == true){
-            var accuracy = handleGameOver(current_page_user_id, text_id, text);
+            var accuracy = handleGameOver(current_page_user_id, text_id, text, error_count);
         }
 
         $.ajax({
@@ -46,7 +47,7 @@ $(document).on("turbolinks:load", function () {
         var error_count = checkWordErrorCount(text, template_text);
         var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
         if (isGameOver(text, template_text) == true){
-            var accuracy = handleGameOver(current_page_user_id, text_id, text);
+            var accuracy = handleGameOver(current_page_user_id, text_id, text, error_count);
         }else{
             accuracy = 0;
         }
@@ -76,22 +77,32 @@ $(document).on("turbolinks:load", function () {
             success:function(response)
             {
                 gameStatus(response);
+                var arr =["First", "Second", "Third", "Fourth", "Fifth"];
+                var game_user= [];
                 for(let i = 0; i< response.stat.length; i++){
                     var current_template_text = response.stat[i]["text_area"];
                     var current_user_id = response.stat[i]["user_id"];
                     var current_wpm = response.stat[i]["wpm"];
                     var current_accuracy = response.stat[i]["accuracy"];
+
                     current_template_text == null ?  current_template_text = "" : current_template_text = response.stat[i]["text_area"];
                     current_wpm == null ?  current_wpm = 0 : current_wpm = response.stat[i]["wpm"];
                     current_accuracy == null ?  current_accuracy = 0 : current_accuracy = response.stat[i]["accuracy"];
                     updateProgressBar(text, current_template_text, current_user_id);
-                    pollWPM(current_user_id, current_wpm);
+                    var get_poll_wpm = pollWPM(current_user_id, current_wpm);
                     if (isGameOver(text, current_template_text) == true){
+                        game_user.push(current_user_id);
+                        var get_final_wpm =  get_poll_wpm;
+                        var grade_user = get_poll_wpm.shift();
+                        var g_user = game_user.shift();
+                        var res = arr.shift();
+                        console.log(`Current user ${g_user} is ${res}`);
                         pollAccuracy(current_user_id, current_accuracy);
                     }
                 }
+
                 //Send another request in 10 seconds.
-                setTimeout(function(){
+                poll_typerace = setTimeout(function(){
                     poll();
                 }, 1000);
             },
@@ -104,53 +115,53 @@ $(document).on("turbolinks:load", function () {
 
     if ($("body").data("action") == "show" && $("body").data("controller") == "type_races"){
         initialGameStatus();
-        if(startTime == undefined){
-            startTime = new Date($.now())/1000;
-        }
         checkWPM();
         poll();
     }
-
-    function gameStatus(data){
-        if (data.stat.length >1){
-            var statusInterval = setInterval( function(){
-                --start;
-                if (start <= 0){
-                    $("#gameTimer").html("");
-                    clearInterval(statusInterval);
-                    var timeInterval= setInterval(function () {
-                        var get_minutes = parseInt(timer/ 60, 10);
-                        var get_seconds = parseInt(timer% 60, 10);
-                        get_minutes = get_minutes < 10 ? "0" + get_minutes : get_minutes;
-                        get_seconds = get_seconds < 10 ? "0" + get_seconds : get_seconds;
-                        $("span#minutes").html(get_minutes.toString() + ":");
-                        $("span#seconds").html(get_seconds.toString());
-                        if (--timer <= 0) {
-                            $("span#minutes").html("00:");
-                            $("span#seconds").html("00");
-                            clearInterval(timeInterval);
-                            // clearTimeout(wpmInterval);
-                        }
-                    }, 5000);
-                }else{
-                    $("#gameTimer").html("Wating For "+start);
-                }
-            }, 5000);
-
-        }else{
-            $("#gameTimer").html("Looking For Competitors");
-        }
-
-    }
-
 });// end of DOM
 
 function  initialGameStatus(){
+    disableInput();
     var statcount = parseInt($('#stat_count').text());
     if (statcount >1){
         $("#gameTimer").html("Ready For Race");
     }else{
         $("#gameTimer").html("Looking For Competitor");
+    }
+}
+
+function gameStatus(response){
+    if(response.stat.length > 1){
+        var statusInterval = setInterval( function(){
+            --countdown;
+            if (countdown <= 0){
+                $("#gameTimer").html("");
+                clearInterval(statusInterval);
+                var timeInterval= setInterval(function () {
+                    var get_minutes = parseInt(timer/ 60, 10);
+                    var get_seconds = parseInt(timer% 60, 10);
+                    var text = $("#text").text();
+                    var template_text = $("#template_text").val();
+                    get_minutes = get_minutes < 10 ? "0" + get_minutes : get_minutes;
+                    get_seconds = get_seconds < 10 ? "0" + get_seconds : get_seconds;
+                    $("span#minutes").html(get_minutes.toString() + ":");
+                    $("span#seconds").html(get_seconds.toString());
+
+                    isGameOver(text, template_text) ? disableInput() : enableInput();
+                    if (--timer <= 0) {
+                        $("span#minutes").html("00:");
+                        $("span#seconds").html("00");
+                        clearInterval(timeInterval);
+                        clearTimeout(poll_typerace);
+                        disableInput();
+                    }
+                }, 5000);
+            }else{
+                $("#gameTimer").html("Wating For "+countdown);
+            }
+        }, 5000);
+    }else{
+        $("#gameTimer").html("Looking For Competitors");
     }
 }
 
@@ -165,7 +176,7 @@ function arrayOfText() {
 }
 
 function checkWordErrorCount(text, template_text){
-    let word_error_count = 0;
+    var  word_error_count = 0;
     for(let i= 0; i< template_text.length; i++){
         if (text[i] != template_text[i]){
             word_error_count += 1
@@ -183,7 +194,6 @@ function updateWPM(current_user_id, current_template_text, word_error_count){
     var timeInMins = timeInSecs/60;
     var wordsWritten = current_template_text.length/5;
     if (word_error_count > wordsWritten){
-        debugger;
         var wpm = 0;
     }else{
         wpm = (wordsWritten-word_error_count)/timeInMins;
@@ -195,12 +205,7 @@ function updateWPM(current_user_id, current_template_text, word_error_count){
 
 function pollWPM(current_user_id, wpm){
     $('#checkWpm'+ current_user_id).text(wpm);
-}
-
-function pollAccuracy(current_user_id, accuracy){
-
-    $('.showAccuracy').show("fast");
-    $('#accuracy'+current_user_id).text(accuracy);
+    return [current_user_id, wpm];
 }
 
 function updateProgressBar(text, template_text, current_user_id){
@@ -239,8 +244,8 @@ function isGameOver(text, template_text){
     return (text === template_text);
 }
 
-function handleGameOver(current_user_id, text_id, text) {
-    var accuracy = displayAccuracy(current_user_id, text);
+function handleGameOver(current_user_id, text_id, text, error_count) {
+    var accuracy = displayAccuracy(current_user_id, text, error_count);
     clearTimeout(wpm_interval);
     $.ajax({
         url: "http://localhost:3000/type_races/"+text_id,
@@ -260,17 +265,30 @@ function handleGameOver(current_user_id, text_id, text) {
     return accuracy;
 }
 
-function displayAccuracy(current_user_id, text) {
+function displayAccuracy(current_user_id, text, error_count) {
     var textCharLen= text.length;
     var userKeyPressInputCharLen= userKeyPressCount;
-    var accuracy = ( textCharLen/userKeyPressInputCharLen )*100;
+    var accuracy = ((userKeyPressInputCharLen-error_count)/userKeyPressInputCharLen)*100;
     accuracy=Math.round( accuracy );
     $('.showAccuracy').show("fast");
     $('#accuracy'+current_user_id).text(accuracy);
     return accuracy;
 }
 
+function pollAccuracy(current_user_id, accuracy){
+    $('.showAccuracy').show("fast");
+    $('#accuracy'+current_user_id).text(accuracy);
+}
+
 function disableInput() {
     $('#template_text').prop('disabled', true);
+}
+
+function enableInput() {
+    $('#template_text').prop('disabled', false);
+    $('#template_text').focus();
+    if(startTime == undefined){
+        startTime = new Date($.now())/1000;
+    }
 }
 
