@@ -1,8 +1,10 @@
-
 var userKeyPressCount=0;
 var startTime;
 var countdown = 10;
 var timer = 60*5;
+var result_array =["First", "Second", "Third", "Fourth", "Fifth"];
+var game_user= [];
+var data = {};
 
 $(document).on("turbolinks:load", function () {
     arrayOfText();
@@ -16,6 +18,7 @@ $(document).on("turbolinks:load", function () {
         var text_id = $("#text_id").val();
         var template_text = $("#template_text").val();
         var current_page_user_id = $(".current_user")[0].id;
+
 
         userKeyPressCount++;
         giveColorFeedback(text, template_text);
@@ -48,6 +51,7 @@ $(document).on("turbolinks:load", function () {
         var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
         if (isGameOver(text, template_text) == true){
             var accuracy = handleGameOver(current_page_user_id, text_id, text, error_count);
+
         }else{
             accuracy = 0;
         }
@@ -77,8 +81,6 @@ $(document).on("turbolinks:load", function () {
             success:function(response)
             {
                 gameStatus(response);
-                var arr =["First", "Second", "Third", "Fourth", "Fifth"];
-                var game_user= [];
                 for(let i = 0; i< response.stat.length; i++){
                     var current_template_text = response.stat[i]["text_area"];
                     var current_user_id = response.stat[i]["user_id"];
@@ -91,17 +93,22 @@ $(document).on("turbolinks:load", function () {
                     updateProgressBar(text, current_template_text, current_user_id);
                     var get_poll_wpm = pollWPM(current_user_id, current_wpm);
                     if (isGameOver(text, current_template_text) == true){
-                        game_user.push(current_user_id);
-                        var get_final_wpm =  get_poll_wpm;
-                        var grade_user = get_poll_wpm.shift();
-                        var g_user = game_user.shift();
-                        var res = arr.shift();
-                        console.log(`Current user ${g_user} is ${res}`);
+                        if(game_user.includes(current_user_id)){
+                            console.log(`The if current user ${current_user_id} is ${data[current_user_id]}`);
+                            $('#result'+current_user_id).text(data[current_user_id]);
+
+                        }else{
+                            var res = result_array.shift();
+                            data[current_user_id] = res;
+                            game_user.push(current_user_id);
+                            console.log(`The else current user ${current_user_id} is ${res}`);
+                            $('#result'+current_user_id).text(data[current_user_id]);
+                        }
                         pollAccuracy(current_user_id, current_accuracy);
                     }
-                }
 
-                //Send another request in 10 seconds.
+                }
+                    //Send another request in 10 seconds.
                 poll_typerace = setTimeout(function(){
                     poll();
                 }, 1000);
