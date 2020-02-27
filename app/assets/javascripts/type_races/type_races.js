@@ -4,13 +4,16 @@ var result_array =["First", "Second", "Third", "Fourth", "Fifth"];
 var game_user= [];
 var data = {};
 var count = 0;
-var xcount =0;
 var game_start_time;
-var game_timer;
 var poll_typerace;
 var status;
 
 $(document).on("turbolinks:load", function(){
+    var text = $("#text").text();
+    var text_id = $("#text_id").val();
+    var template_text = $("#template_text").val();
+    var current_page_user_id = $(".current_user")[0].id;
+
     arrayOfText();
     $("button").on("click",function () {
         $('#template_text').focus();
@@ -18,10 +21,10 @@ $(document).on("turbolinks:load", function(){
     });
 
     $("#template_text").keyup(function(){
-        var text = $("#text").text();
-        var text_id = $("#text_id").val();
-        var template_text = $("#template_text").val();
-        var current_page_user_id = $(".current_user")[0].id;
+        // var text = $("#text").text();
+        // var text_id = $("#text_id").val();
+        // var template_text = $("#template_text").val();
+        // var current_page_user_id = $(".current_user")[0].id;
 
         userKeyPressCount++;
         giveColorFeedback(text, template_text);
@@ -71,8 +74,8 @@ $(document).on("turbolinks:load", function(){
     // }
 
     function poll(){
-        var text = $("#text").text();
-        var text_id = $("#text_id").val();
+        // var text = $("#text").text();
+        // var text_id = $("#text_id").val();
 
         $.ajax({
             type: "GET",
@@ -182,17 +185,18 @@ function gameStatus(response){
             status = "pending";
             $("#gameTimer").html("Wating For "+response_countdown);
         }
-        $.ajax({
-            url: "http://localhost:3000/type_races/"+text_id,
-            type: "PUT",
-            dataType: "json",
-            cache: false,
-            data: {"status": status, "countdown": response_countdown,"start_time": game_start_time}
-        });
+
     }else{
         $("#gameTimer").html("Looking For Competitors");
     }
-
+    
+    $.ajax({
+        url: "http://localhost:3000/type_races/"+text_id,
+        type: "PUT",
+        dataType: "json",
+        cache: false,
+        data: {"status": status, "countdown": response_countdown,"start_time": game_start_time}
+    });
 }
 
 function arrayOfText() {
@@ -216,18 +220,14 @@ function checkWordErrorCount(text, template_text){
 }
 
 function updateWPM(current_user_id, current_template_text, word_error_count){
-    var currentTime = new Date($.now())/1000;
+    var wpm;
     if(isNaN(startTime)){
         startTime = new Date($.now())/1000;
     }
-    var timeInSecs = currentTime-startTime;
+    var timeInSecs = new Date($.now())/1000-startTime;
     var timeInMins = timeInSecs/60;
     var wordsWritten = current_template_text.length/5;
-    if (word_error_count > wordsWritten){
-        var wpm = 0;
-    }else{
-        wpm = (wordsWritten-word_error_count)/timeInMins;
-    }
+    word_error_count > wordsWritten ? wpm = 0 : wpm = (wordsWritten-word_error_count)/timeInMins
     var get_wpm = parseInt(wpm,10);
     $('#checkWpm'+ current_user_id).text(get_wpm);
     return get_wpm;
@@ -276,20 +276,6 @@ function isGameOver(text, template_text){
 function handleGameOver(current_user_id, text_id, error_count) {
     // clearTimeout(wpm_interval);
     var accuracy = displayAccuracy(current_user_id, error_count);
-    $.ajax({
-        url: "http://localhost:3000/type_races/"+text_id,
-        type: "GET",
-        cache: false,
-        success: function (response) {
-            var len = response.length;
-            for(var i= 0; i<len; i++){
-                var desc = response[i];
-            }
-        },
-        error: function (data) {
-            console.log("The error is "+data);
-        }
-    });
     disableInput();
     return accuracy;
 }
@@ -320,4 +306,3 @@ function enableInput() {
     }
     return startTime;
 }
-
