@@ -21,22 +21,14 @@ $(document).on("turbolinks:load", function(){
     });
 
     $("#template_text").keyup(function(){
-        // var text = $("#text").text();
-        // var text_id = $("#text_id").val();
-        // var template_text = $("#template_text").val();
-        // var current_page_user_id = $(".current_user")[0].id;
-
         userKeyPressCount++;
         giveColorFeedback(text, template_text);
         updateProgressBar(text, template_text, current_page_user_id);
-
         var  error_count = checkWordErrorCount(text, template_text);
         var post_wpm = updateWPM(current_page_user_id, template_text, error_count);
-
         if (isGameOver(text, template_text) == true){
             var accuracy = handleGameOver(current_page_user_id, text_id, error_count);
         }
-
         $.ajax({
             url: "http://localhost:3000/type_races/"+text_id,
             type: "PUT",
@@ -74,9 +66,6 @@ $(document).on("turbolinks:load", function(){
     // }
 
     function poll(){
-        // var text = $("#text").text();
-        // var text_id = $("#text_id").val();
-
         $.ajax({
             type: "GET",
             cache: false,
@@ -96,7 +85,7 @@ $(document).on("turbolinks:load", function(){
 
                     updateProgressBar(text, current_template_text, current_user_id);
                     var get_poll_wpm = pollWPM(current_user_id, current_wpm);
-                    if (isGameOver(text, current_template_text) == true){
+                    if (isGameOver(text, current_template_text)){
                         status = "completed";
                         if(game_user.includes(current_user_id)){
                             $('#result'+current_user_id).text(data[current_user_id]);
@@ -112,8 +101,6 @@ $(document).on("turbolinks:load", function(){
                         status = "cancel";
                     }
                 }
-
-
                 //Send another request in 10 seconds.
                 poll_typerace = setTimeout(function(){
                     poll();
@@ -173,7 +160,7 @@ function gameStatus(response){
                     $("span#minutes").html("<p style='color:darkblue;'>The race has ended</p>");
                     $("span#seconds").html("");
 
-                    if (isGameOver(text, template_text) == false){
+                    if (!isGameOver(text, template_text)){
                         status = "cancel";
                     }
                     disableInput();
@@ -185,18 +172,17 @@ function gameStatus(response){
             status = "pending";
             $("#gameTimer").html("Wating For "+response_countdown);
         }
-
+        $.ajax({
+            url: "http://localhost:3000/type_races/"+text_id,
+            type: "PUT",
+            dataType: "json",
+            cache: false,
+            data: {"status": status, "countdown": response_countdown,"start_time": game_start_time}
+        });
     }else{
         $("#gameTimer").html("Looking For Competitors");
     }
-    
-    $.ajax({
-        url: "http://localhost:3000/type_races/"+text_id,
-        type: "PUT",
-        dataType: "json",
-        cache: false,
-        data: {"status": status, "countdown": response_countdown,"start_time": game_start_time}
-    });
+
 }
 
 function arrayOfText() {
