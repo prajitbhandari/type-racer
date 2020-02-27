@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_19_042544) do
+ActiveRecord::Schema.define(version: 2020_02_27_070156) do
 
   create_table "race_templates", force: :cascade do |t|
     t.text "text"
@@ -36,6 +36,8 @@ ActiveRecord::Schema.define(version: 2020_02_19_042544) do
     t.datetime "updated_at", null: false
     t.integer "race_templates_id"
     t.integer "status", default: 0
+    t.integer "countdown"
+    t.float "start_time"
   end
 
   create_table "users", force: :cascade do |t|
