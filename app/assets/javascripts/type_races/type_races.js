@@ -87,15 +87,15 @@ $(document).on("turbolinks:load", function(){
                     var get_poll_wpm = pollWPM(current_user_id, current_wpm);
                     if (isGameOver(text, current_template_text)){
                         status = "completed";
-                        if(game_user.includes(current_user_id)){
-                            $('#result'+current_user_id).text(data[current_user_id]);
-
-                        }else{
-                            var type_race_stat = result_array.shift();
-                            data[current_user_id] = type_race_stat;
-                            game_user.push(current_user_id);
-                            $('#result'+current_user_id).text(data[current_user_id]);
-                        }
+                        // if(game_user.includes(current_user_id)){
+                        //     $('#result'+current_user_id).text(data[current_user_id]);
+                        //
+                        // }else{
+                        //     var type_race_stat = result_array.shift();
+                        //     data[current_user_id] = type_race_stat;
+                        //     game_user.push(current_user_id);
+                        //     $('#result'+current_user_id).text(data[current_user_id]);
+                        // }
                         pollAccuracy(current_user_id, current_accuracy);
                     }else{
                         status = "cancel";
@@ -104,7 +104,7 @@ $(document).on("turbolinks:load", function(){
                 //Send another request in 10 seconds.
                 poll_typerace = setTimeout(function(){
                     poll();
-                }, 1000);
+                }, 3000);
             },
             error: function (error) {
                 alert("The error is "+ error);
